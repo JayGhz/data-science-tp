@@ -19,5 +19,4 @@ server <- function(input, output, session) {
   server_logic(input, output)
 }
 
-# Lanzar la app
 shinyApp(ui, server)
