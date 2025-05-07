@@ -1,7 +1,17 @@
-.Rproj.user
-renv
+renv/library/
+renv/staging/
+renv/python/
 
 .Rhistory
 .RData
+.Ruserdata
 .Rproj.user/
+
+.Rapp.history
+.Rcheck/
+
 .DS_Store
+Thumbs.db
+
+*.Rproj.user/
+*.Rproj

@@ -21,7 +21,7 @@ sidebar_ui <- dashboardSidebar(
       icon = icon("upload")
     ),
     menuItem(
-      "Inspeccionar Datos", 
+      "Inspeccionar Datos",
       tabName = "inspeccionar_datos",
       icon = icon("search")
     )
