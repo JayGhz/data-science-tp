@@ -16,7 +16,7 @@ ui <- dashboardPage(
 source("src/server_logic.R")
 
 server <- function(input, output, session) {
-  server_logic(input, output)
+  server_logic(input, output, session)
 }
 
 shinyApp(ui, server)
