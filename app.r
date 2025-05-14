@@ -8,7 +8,7 @@ library(DT)
 source("src/ui_components.r")
 
 ui <- dashboardPage(
-  dashboardHeader(title = "Data Science - TP"),
+  dashboardHeader(title = "TP"),
   sidebar_ui,
   body_ui
 )

@@ -1,0 +1,104 @@
+body,
+.content-wrapper {
+    font-family: 'Segoe UI', 'Roboto', 'Arial', sans-serif;
+    background: #f4f6f9;
+    color: #222;
+}
+
+.main-header,
+.main-sidebar {
+    background: #ffffff !important;
+}
+
+.main-header .logo {
+    background: transparent;
+    color: #fff;
+    font-weight: bold;
+    font-size: 22px;
+    letter-spacing: 1px;
+}
+
+.sidebar-menu>li>a {
+    color: #283e51 !important;
+    transition: background 0.2s, border-radius 0.2s;
+    border-radius: 12px;
+    margin: 16px 12px;
+}
+
+.sidebar-menu>li.active>a,
+.sidebar-menu>li>a:hover {
+    background: #3c8dbc !important;
+    font-weight: bold !important;
+    color: #fff !important;
+    border-radius: 16px;
+    border: none;
+}
+
+.box {
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(40, 62, 81, 0.07);
+    border: none;
+    background: #fff;
+    margin-bottom: 24px;
+}
+
+.box>.box-header {
+    border-bottom: 1px solid #e0e0e0;
+    background: #f7fafc;
+    border-radius: 12px 12px 0 0;
+    font-weight: 600;
+    color: #283e51;
+}
+
+.btn,
+.btn-primary,
+.btn-default {
+    border-radius: 6px;
+    font-weight: 500;
+    height: 34px;
+    margin-bottom: 6px;
+    background: #3c8dbc;
+    color: #fff;
+    border: none;
+    transition: background 0.2s;
+}
+
+.btn:hover,
+.btn-primary:hover,
+.btn-default:hover {
+    background: #283e51;
+    color: #fff;
+}
+
+.dataTable,
+.table {
+    background: #fff;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 1px 4px rgba(40, 62, 81, 0.05);
+}
+
+.dataTable th,
+.dataTable td,
+.table th,
+.table td {
+    border: none;
+    padding: 10px 12px;
+}
+
+.dataTable th {
+    background: #f7fafc;
+    color: #283e51;
+    font-weight: 600;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+    color: #283e51;
+    font-family: 'Segoe UI', 'Roboto', 'Arial', sans-serif;
+    font-weight: 700;
+}

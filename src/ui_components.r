@@ -3,6 +3,9 @@ library(shinydashboard)
 
 sidebar_ui <- dashboardSidebar(
   width = 250,
+  tags$div(
+    style = "padding: 0px 0 12px",
+  ),
   sidebarMenu(
     tags$head(
       tags$style(HTML("
@@ -26,7 +29,7 @@ sidebar_ui <- dashboardSidebar(
       icon = icon("search")
     ),
     menuItem(
-      "Preprocesamiento de Datos",
+      "Preprocesamiento",
       tabName = "preprocesamiento_datos",
       icon = icon("filter")
     )
@@ -34,6 +37,24 @@ sidebar_ui <- dashboardSidebar(
 )
 
 body_ui <- dashboardBody(
+  tags$head(
+    tags$link(rel = "stylesheet", type = "text/css", href = "style.css"),
+    tags$style(HTML("
+      .main-header {
+        position: fixed;
+        width: 100%;
+        z-index: 1030;
+      }
+      .main-sidebar {
+        position: fixed;
+        height: 100%;
+        z-index: 1020;
+      }
+      .content-wrapper {
+        padding-top: 50px;
+      }
+    "))
+  ),
   tabItems(
     tabItem(tabName = "carga_datos",
       fluidRow(
@@ -54,18 +75,26 @@ body_ui <- dashboardBody(
         box(
           title = "Estructura de los Datos",
           width = 12,
-          verbatimTextOutput("data_structure")
-        ),
+          verbatimTextOutput("data_structure"),
+          actionButton("btn_convertir_factores", "Convertir Variables Categoricas a Factores",
+                       icon = icon("exchange-alt"), 
+                       class = "btn-primary",
+                       style = "margin-top: 15px;"),
+          div(style = "margin-top: 25px;",
+              verbatimTextOutput("resultado_conversion")
+          )
+        )
+      ),
+      fluidRow(
         box(
           title = "Resumen de los Datos",
           width = 12,
-          verbatimTextOutput("data_summary")
+          uiOutput("resumen_variables")
         )
       )
     ),
     tabItem(tabName = "preprocesamiento_datos",
       fluidRow(
-        # Tratamiento de Valores Cero
         box(
           title = "Tratamiento de Valores Cero",
           width = 12,
@@ -82,7 +111,7 @@ body_ui <- dashboardBody(
         box(
           title = "Identificación de Datos Faltantes",
           width = 6,
-          actionButton("btn_identificar_na", "Identificar Datos Faltantes", 
+          actionButton("btn_identificar_na", "Identificar Datos Faltantes",
                        icon = icon("search"), 
                        class = "btn-primary", 
                        style = "margin-bottom: 15px;"),
@@ -94,7 +123,7 @@ body_ui <- dashboardBody(
           title = "Identificación de Datos Atípicos (Outliers)",
           width = 6,
           selectInput("columna_outliers", "Selecciona columna numérica:", choices = NULL),
-          actionButton("btn_identificar_outliers", "Identificar Outliers", 
+          actionButton("btn_identificar_outliers", "Identificar Outliers",
                        icon = icon("search"), 
                        class = "btn-primary", 
                        style = "margin-bottom: 15px;"),
@@ -114,7 +143,7 @@ body_ui <- dashboardBody(
                                 "Imputar con moda" = "moda")),
           selectInput("columnas_na", "Selecciona columnas a tratar:", choices = NULL, multiple = TRUE),
           actionButton("btn_tratar_na", "Aplicar Tratamiento", 
-                       icon = icon("wrench"), 
+                       icon = icon("wrench"),
                        class = "btn-success"),
           verbatimTextOutput("resultado_na")
         ),
