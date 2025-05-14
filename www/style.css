@@ -1,13 +1,28 @@
 body,
 .content-wrapper {
     font-family: 'Segoe UI', 'Roboto', 'Arial', sans-serif;
-    background: #f4f6f9;
+    background: #ffffff;
     color: #222;
 }
 
-.main-header,
+.skin-blue .left-side, .skin-blue .main-sidebar, .skin-blue .wrapper {
+    background: #ffffff!important;
+}
+
+/* .main-header, */
 .main-sidebar {
     background: #ffffff !important;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(63, 88, 110, 0.256) !important;
+    border: none;
+    margin-bottom: 24px !important;
+    position: fixed;
+    padding-top: 0;
+    height: 620px !important;
+    min-height: 620px !important;
+    width: 230px;
+    margin-top: 65px;
+    margin-left: 15px;
 }
 
 .main-header .logo {
@@ -22,7 +37,7 @@ body,
     color: #283e51 !important;
     transition: background 0.2s, border-radius 0.2s;
     border-radius: 12px;
-    margin: 16px 12px;
+    margin: 22px 12px;
 }
 
 .sidebar-menu>li.active>a,
@@ -36,10 +51,11 @@ body,
 
 .box {
     border-radius: 12px;
-    box-shadow: 0 2px 8px rgba(40, 62, 81, 0.07);
+    box-shadow: 0 2px 8px rgba(63, 88, 110, 0.256);
     border: none;
     background: #fff;
     margin-bottom: 24px;
+    padding: 20px;
 }
 
 .box>.box-header {
@@ -47,6 +63,7 @@ body,
     background: #f7fafc;
     border-radius: 12px 12px 0 0;
     font-weight: 600;
+    padding: 20px;
     color: #283e51;
 }
 
@@ -56,7 +73,7 @@ body,
     border-radius: 6px;
     font-weight: 500;
     height: 34px;
-    margin-bottom: 6px;
+    margin-bottom: 10px;
     background: #3c8dbc;
     color: #fff;
     border: none;
@@ -75,7 +92,7 @@ body,
     background: #fff;
     border-radius: 8px;
     overflow: hidden;
-    box-shadow: 0 1px 4px rgba(40, 62, 81, 0.05);
+    box-shadow: 0 1px 4px rgba(63, 88, 110, 0.256);
 }
 
 .dataTable th,

@@ -3,9 +3,6 @@ library(shinydashboard)
 
 sidebar_ui <- dashboardSidebar(
   width = 250,
-  tags$div(
-    style = "padding: 0px 0 12px",
-  ),
   sidebarMenu(
     tags$head(
       tags$style(HTML("
