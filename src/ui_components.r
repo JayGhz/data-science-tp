@@ -92,18 +92,6 @@ body_ui <- dashboardBody(
     ),
     tabItem(tabName = "preprocesamiento_datos",
       fluidRow(
-        box(
-          title = "Tratamiento de Valores Cero",
-          width = 12,
-          p("Reemplazar valores 0 con NA en columnas seleccionadas"),
-          selectInput("columnas_cero", "Selecciona columnas donde reemplazar ceros:", choices = NULL, multiple = TRUE),
-          actionButton("btn_reemplazar_ceros", "Reemplazar Ceros con NA", 
-                       icon = icon("exchange-alt"), 
-                       class = "btn-warning"),
-          verbatimTextOutput("resultado_ceros")
-        )
-      ),
-      fluidRow(
         # Identificación de Datos Faltantes
         box(
           title = "Identificación de Datos Faltantes",
@@ -119,7 +107,7 @@ body_ui <- dashboardBody(
         box(
           title = "Identificación de Datos Atípicos (Outliers)",
           width = 6,
-          selectInput("columna_outliers", "Selecciona columna numérica:", choices = NULL),
+          selectInput("columna_outliers", "Selecciona una columna numérica:", choices = NULL, multiple = FALSE),
           actionButton("btn_identificar_outliers", "Identificar Outliers",
                        icon = icon("search"), 
                        class = "btn-primary", 
@@ -134,11 +122,13 @@ body_ui <- dashboardBody(
           title = "Tratamiento de Datos Faltantes",
           width = 6,
           selectInput("metodo_na", "Selecciona método de tratamiento:",
-                     choices = c("Eliminar filas" = "eliminar",
+                     choices = c("Eliminar filas" = "eliminar_filas",
+                                "Eliminar columnas" = "eliminar_columnas",
                                 "Imputar con media" = "media",
                                 "Imputar con mediana" = "mediana",
                                 "Imputar con moda" = "moda")),
           selectInput("columnas_na", "Selecciona columnas a tratar:", choices = NULL, multiple = TRUE),
+          checkboxInput("todas_columnas_na", "Seleccionar todas las columnas", FALSE),
           actionButton("btn_tratar_na", "Aplicar Tratamiento", 
                        icon = icon("wrench"),
                        class = "btn-success"),
@@ -148,6 +138,8 @@ body_ui <- dashboardBody(
         box(
           title = "Tratamiento de Datos Atípicos",
           width = 6,
+          selectInput("columnas_tratamiento_outliers", "Selecciona columnas a tratar:", choices = NULL, multiple = TRUE),
+          checkboxInput("todas_columnas_outliers", "Seleccionar todas las columnas numéricas", FALSE),
           selectInput("metodo_outliers", "Selecciona método de tratamiento:",
                      choices = c("Eliminar outliers" = "eliminar",
                                 "Winsorización" = "winsor",
@@ -156,6 +148,17 @@ body_ui <- dashboardBody(
                        icon = icon("wrench"), 
                        class = "btn-success"),
           verbatimTextOutput("resultado_outliers")
+        )
+      ),
+      fluidRow(
+        box(
+          title = "Resumen de Datos Limpios",
+          width = 12,
+          actionButton("btn_resumen_limpieza", "Ver Resumen de Datos Limpios", 
+                       icon = icon("check-circle"), 
+                       class = "btn-info",
+                       style = "margin-bottom: 15px;"),
+          verbatimTextOutput("resumen_limpieza")
         )
       )
     )
