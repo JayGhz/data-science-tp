@@ -120,7 +120,7 @@ body_ui <- dashboardBody(
         # Tratamiento de Datos Faltantes
         box(
           title = "Tratamiento de Datos Faltantes",
-          width = 6,
+          width = 12,
           selectInput("metodo_na", "Selecciona método de tratamiento:",
                      choices = c("Eliminar filas" = "eliminar_filas",
                                 "Eliminar columnas" = "eliminar_columnas",
@@ -137,7 +137,7 @@ body_ui <- dashboardBody(
         # Tratamiento de Datos Atípicos
         box(
           title = "Tratamiento de Datos Atípicos",
-          width = 6,
+          width = 12,
           selectInput("columnas_tratamiento_outliers", "Selecciona columnas a tratar:", choices = NULL, multiple = TRUE),
           checkboxInput("todas_columnas_outliers", "Seleccionar todas las columnas numéricas", FALSE),
           selectInput("metodo_outliers", "Selecciona método de tratamiento:",
