@@ -4,6 +4,7 @@ server_logic <- function(input, output, session) {
   library(dplyr)
   library(tidyr)
   library(forcats)
+  library(scales)
 
   # Datos reactivos
   data <- reactive({
@@ -189,7 +190,7 @@ server_logic <- function(input, output, session) {
     req(processed_data(), input$columnas_na, input$metodo_na)
 
     current_data <- processed_data()
-    result_msgs <- list()  # Inicializar lista de mensajes
+    result_msgs <- list() # Inicializar lista de mensajes
 
     if (input$metodo_na == "eliminar_filas") {
       rows_before <- nrow(current_data)
@@ -342,14 +343,14 @@ server_logic <- function(input, output, session) {
     # Obtener columnas seleccionadas y método de tratamiento
     current_data <- processed_data()
     numeric_cols <- names(current_data)[sapply(current_data, is.numeric)]
-    
+
     # Determinar qué columnas procesar
     cols <- if (input$todas_columnas_outliers) {
       numeric_cols
     } else {
       input$columnas_tratamiento_outliers
     }
-    
+
     result_msgs <- list()
 
     # Procesar cada columna seleccionada
@@ -369,7 +370,6 @@ server_logic <- function(input, output, session) {
       # Aplicar tratamiento según método seleccionado
       if (input$metodo_outliers == "eliminar") {
         if (outlier_count > 0) {
-          # Guardar índices para eliminar después de procesar todas las columnas
           if (!exists("indices_to_remove")) {
             indices_to_remove <- outlier_indices
           } else {
@@ -407,6 +407,320 @@ server_logic <- function(input, output, session) {
         "winsor" = "Winsorización (percentiles 5-95)",
         "limites" = "Reemplazo con límites IQR"
       ))
+    })
+  })
+
+  # VISUALIZACIONES
+
+  # Paleta de colores minimalista para gráficos
+  colores_paleta <- c("#848de1", "#00CC99", "#0fa37e")
+
+
+  # 1. Gráfico de tipo de hotel
+  observeEvent(input$btn_grafico_tipo_hotel, {
+    req(processed_data())
+
+    hotel_counts <- processed_data() %>%
+      count(hotel) %>%
+      mutate(
+        porcentaje = n / sum(n) * 100,
+        etiqueta = paste0(hotel, "\n", round(porcentaje, 1), "%")
+      )
+
+    # Generar gráfico circular
+    output$grafico_tipo_hotel <- renderPlot({
+      ggplot(hotel_counts, aes(x = "", y = n, fill = hotel)) +
+        geom_bar(stat = "identity", width = 1) +
+        coord_polar("y", start = 0) +
+        theme_minimal() +
+        theme(
+          axis.title = element_blank(),
+          axis.text = element_blank(),
+          panel.grid = element_blank(),
+          plot.title = element_text(hjust = 0.5, size = 14, face = "bold"),
+          legend.position = "right",
+          legend.title = element_blank()
+        ) +
+        scale_fill_manual(values = colores_paleta) +
+        geom_text(aes(label = etiqueta), position = position_stack(vjust = 0.5), size = 4) +
+        labs(title = "Distribución de Reservas por Tipo de Hotel")
+    })
+  })
+
+  # 2. Gráfico de demanda en el tiempo
+  observeEvent(input$btn_grafico_demanda_tiempo, {
+    req(processed_data())
+
+    # Preparar datos
+    demanda_data <- processed_data() %>%
+      mutate(fecha_llegada = as.Date(paste(arrival_date_year, arrival_date_month, arrival_date_day_of_month, sep = "-"), format = "%Y-%B-%d")) %>%
+      mutate(mes_anio = format(fecha_llegada, "%Y-%m"))
+
+    # Filtrar por año si es necesario
+    if (input$anio_demanda != "todos") {
+      demanda_data <- demanda_data %>% filter(arrival_date_year == input$anio_demanda)
+    }
+
+    # Agrupar por mes y contar reservas
+    demanda_mensual <- demanda_data %>%
+      count(mes_anio) %>%
+      arrange(mes_anio)
+
+    # Generar gráfico de línea
+    output$grafico_demanda_tiempo <- renderPlot({
+      # Crear vector de meses para mostrar solo trimestrales
+      todos_meses <- unique(demanda_mensual$mes_anio)
+      meses_trimestrales <- todos_meses[seq(1, length(todos_meses), by = 3)]
+
+      ggplot(demanda_mensual, aes(x = mes_anio, y = n, group = 1)) +
+        geom_line(color = colores_paleta[2], size = 1.2) +
+        geom_point(color = colores_paleta[2], size = 3) +
+        theme_minimal() +
+        theme(
+          axis.text.x = element_text(angle = 45, hjust = 1),
+          plot.title = element_text(hjust = 0.5, size = 14, face = "bold"),
+          panel.grid.minor = element_blank()
+        ) +
+        # Escala personalizada para mostrar solo meses trimestrales
+        scale_x_discrete(breaks = meses_trimestrales) +
+        labs(
+          title = "Evolución de la Demanda de Reservas",
+          x = "Trimestre",
+          y = "Número de Reservas"
+        ) +
+        scale_y_continuous(labels = comma)
+    })
+  })
+
+  # 3. Gráfico de temporadas
+  observeEvent(input$btn_grafico_temporadas, {
+    req(processed_data())
+
+    # Preparar datos
+    temporadas_data <- processed_data()
+
+    # Filtrar por tipo de hotel si es necesario
+    if (input$tipo_hotel_temporada != "todos") {
+      temporadas_data <- temporadas_data %>% filter(hotel == input$tipo_hotel_temporada)
+    }
+
+    # Agrupar por mes y contar reservas
+    temporadas_mensual <- temporadas_data %>%
+      count(arrival_date_month) %>%
+      mutate(mes = factor(arrival_date_month, levels = month.name))
+
+    # Calcular cuartiles para determinar temporadas
+    cuartiles <- quantile(temporadas_mensual$n, probs = c(0.33, 0.66))
+
+    temporadas_mensual <- temporadas_mensual %>%
+      mutate(
+        temporada = case_when(
+          n <= cuartiles[1] ~ "Baja",
+          n <= cuartiles[2] ~ "Media",
+          TRUE ~ "Alta"
+        ),
+        temporada = factor(temporada, levels = c("Baja", "Media", "Alta"))
+      )
+
+    # Generar gráfico de barras con colores por temporada
+    output$grafico_temporadas <- renderPlot({
+      ggplot(temporadas_mensual, aes(x = mes, y = n, fill = temporada)) +
+        geom_bar(stat = "identity") +
+        theme_minimal() +
+        theme(
+          axis.text.x = element_text(angle = 45, hjust = 1),
+          plot.title = element_text(hjust = 0.5, size = 14, face = "bold"),
+          legend.position = "right",
+          panel.grid.minor = element_blank()
+        ) +
+        scale_fill_manual(values = c("Baja" = "#00CC99", "Media" = "#0bbd90", "Alta" = "#0fa37e")) +
+        labs(
+          title = "Temporadas de Reservas por Mes",
+          x = "Mes",
+          y = "Número de Reservas",
+          fill = "Temporada"
+        )
+    })
+  })
+
+  # 4. Gráfico de menor demanda
+  observeEvent(input$btn_grafico_menor_demanda, {
+    req(processed_data())
+
+    # Preparar datos
+    demanda_data <- processed_data()
+
+    # Filtrar por año si es necesario
+    if (input$anio_menor_demanda != "todos") {
+      demanda_data <- demanda_data %>% filter(arrival_date_year == input$anio_menor_demanda)
+    }
+
+    # Agrupar por mes y contar reservas
+    demanda_mensual <- demanda_data %>%
+      count(arrival_date_month) %>%
+      mutate(mes = factor(arrival_date_month, levels = month.name)) %>%
+      arrange(n)
+
+    # Destacar los meses con menor demanda (primer cuartil)
+    cuartil_inferior <- quantile(demanda_mensual$n, 0.25)
+    demanda_mensual <- demanda_mensual %>%
+      mutate(destacado = n <= cuartil_inferior)
+
+    # Generar gráfico de barras con meses de menor demanda destacados
+    output$grafico_menor_demanda <- renderPlot({
+      ggplot(demanda_mensual, aes(x = reorder(mes, n), y = n, fill = destacado)) +
+        geom_bar(stat = "identity") +
+        theme_minimal() +
+        theme(
+          axis.text.x = element_text(angle = 45, hjust = 1),
+          plot.title = element_text(hjust = 0.5, size = 14, face = "bold"),
+          legend.position = "none",
+          panel.grid.minor = element_blank()
+        ) +
+        scale_fill_manual(values = c("FALSE" = colores_paleta[1], "TRUE" = colores_paleta[2])) +
+        labs(
+          title = "Meses con Menor Demanda de Reservas",
+          x = "Mes",
+          y = "Número de Reservas"
+        ) +
+        coord_flip()
+    })
+  })
+
+  # 5. Gráfico de niños y bebés
+  observeEvent(input$btn_grafico_ninos, {
+    req(processed_data())
+
+    # Preparar datos
+    ninos_data <- processed_data() %>%
+      mutate(tiene_ninos = children > 0 | babies > 0)
+
+    # Filtrar por tipo de hotel si es necesario
+    if (input$tipo_hotel_ninos != "todos") {
+      ninos_data <- ninos_data %>% filter(hotel == input$tipo_hotel_ninos)
+    }
+
+    # Calcular porcentajes
+    ninos_summary <- ninos_data %>%
+      count(tiene_ninos) %>%
+      mutate(
+        porcentaje = n / sum(n) * 100,
+        etiqueta = paste0(
+          ifelse(tiene_ninos, "Con niños/bebés", "Sin niños/bebés"),
+          "\n", round(porcentaje, 1), "%"
+        )
+      )
+
+    # Generar gráfico de dona
+    output$grafico_ninos <- renderPlot({
+      ggplot(ninos_summary, aes(x = 2, y = porcentaje, fill = tiene_ninos)) +
+        geom_bar(stat = "identity", width = 1) +
+        coord_polar("y", start = 0) +
+        theme_void() +
+        theme(
+          plot.title = element_text(hjust = 0.5, size = 14, face = "bold"),
+          legend.position = "right",
+          legend.title = element_blank()
+        ) +
+        scale_fill_manual(
+          values = c("FALSE" = colores_paleta[1], "TRUE" = colores_paleta[2]),
+          labels = c("FALSE" = "Sin niños/bebés", "TRUE" = "Con niños/bebés")
+        ) +
+        geom_text(aes(label = etiqueta), position = position_stack(vjust = 0.5), size = 4) +
+        labs(title = "Reservas con Niños y/o Bebés") +
+        xlim(0.5, 2.5) # Para crear efecto de dona
+    })
+  })
+
+  # 6. Gráfico de estacionamiento
+  observeEvent(input$btn_grafico_estacionamiento, {
+    req(processed_data())
+
+    # Preparar datos - asumiendo que required_car_parking_spaces indica necesidad de estacionamiento
+    parking_data <- processed_data() %>%
+      mutate(necesita_estacionamiento = required_car_parking_spaces > 0)
+
+    # Calcular porcentajes por tipo de hotel
+    parking_summary <- parking_data %>%
+      group_by(hotel, necesita_estacionamiento) %>%
+      summarise(count = n(), .groups = "drop") %>%
+      group_by(hotel) %>%
+      mutate(porcentaje = count / sum(count) * 100) %>%
+      ungroup()
+
+    # Generar gráfico de barras agrupadas
+    output$grafico_estacionamiento <- renderPlot({
+      ggplot(parking_summary, aes(x = hotel, y = porcentaje, fill = necesita_estacionamiento)) +
+        geom_bar(stat = "identity", position = "dodge") +
+        theme_minimal() +
+        theme(
+          plot.title = element_text(hjust = 0.5, size = 14, face = "bold"),
+          legend.position = "right",
+          panel.grid.minor = element_blank()
+        ) +
+        scale_fill_manual(
+          values = c("FALSE" = colores_paleta[1], "TRUE" = colores_paleta[2]),
+          labels = c("FALSE" = "No necesita", "TRUE" = "Necesita")
+        ) +
+        labs(
+          title = "Necesidad de Estacionamiento por Tipo de Hotel",
+          x = "Tipo de Hotel",
+          y = "Porcentaje de Reservas (%)",
+          fill = "Estacionamiento"
+        ) +
+        geom_text(aes(label = paste0(round(porcentaje, 1), "%")),
+          position = position_dodge(width = 0.9),
+          vjust = -0.5,
+          size = 3.5
+        )
+    })
+  })
+
+  # 7. Gráfico de cancelaciones
+  observeEvent(input$btn_grafico_cancelaciones, {
+    req(processed_data())
+
+    # Preparar datos
+    cancelaciones_data <- processed_data() %>%
+      filter(is_canceled == 1)
+
+    # Filtrar por año si es necesario
+    if (input$anio_cancelaciones != "todos") {
+      cancelaciones_data <- cancelaciones_data %>% filter(arrival_date_year == input$anio_cancelaciones)
+    }
+
+    # Agrupar por mes y contar cancelaciones
+    cancelaciones_mensual <- cancelaciones_data %>%
+      count(arrival_date_month) %>%
+      mutate(mes = factor(arrival_date_month, levels = month.name))
+
+    # Calcular el porcentaje de cancelaciones respecto al total de reservas por mes
+    total_reservas_mes <- processed_data() %>%
+      count(arrival_date_month) %>%
+      rename(total = n)
+
+    cancelaciones_porcentaje <- cancelaciones_mensual %>%
+      left_join(total_reservas_mes, by = "arrival_date_month") %>%
+      mutate(porcentaje = n / total * 100)
+
+    # Generar gráfico de barras con gradiente de color
+    output$grafico_cancelaciones <- renderPlot({
+      ggplot(cancelaciones_porcentaje, aes(x = mes, y = porcentaje, fill = porcentaje)) +
+        geom_bar(stat = "identity") +
+        theme_minimal() +
+        theme(
+          axis.text.x = element_text(angle = 45, hjust = 1),
+          plot.title = element_text(hjust = 0.5, size = 14, face = "bold"),
+          panel.grid.minor = element_blank()
+        ) +
+        scale_fill_gradient(low = colores_paleta[2], high = colores_paleta[3]) +
+        labs(
+          title = "Porcentaje de Cancelaciones por Mes",
+          x = "Mes",
+          y = "Porcentaje de Cancelaciones (%)",
+          fill = "Porcentaje"
+        ) +
+        geom_text(aes(label = paste0(round(porcentaje, 1), "%")), vjust = -0.5, size = 3.5)
     })
   })
 }
